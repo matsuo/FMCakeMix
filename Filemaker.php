@@ -31,8 +31,8 @@
 // = FX.php : required base class
 // =================================================================================
 // FX is a free open-source PHP class for accessing FileMaker using curl and xml
-// By: Chris Hansen with Chris Adams, Gjermund Thorsen, and others
-// Tested with version: 4.5.1
+// By: Chris Hansen with Chris Adams, G G Thorsen, Masayuki Nii, and others
+// Tested with version: 6.0
 // Web Site: www.iviking.org
 // =================================================================================
 
@@ -164,48 +164,190 @@ class Filemaker extends DboSource {
 		/*
 		 * TODO : this has a junk interpretation of a logical or statement, that isn't nestable
 		 * it therefore turns the whole query into an or, if an or statement is injected somewhere
-		 * this is a major limitation of fx.php
 		 */
+		$isOr = false;  // a boolean indicating wether this query is logical or
+		$isFindQuery = false;
 		if(!empty($queryData['conditions'])) {
 			$conditions = array(); // a clean set of queries
-			$isOr = false;  // a boolean indicating wether this query is logical or
-
+			
 			foreach($queryData['conditions'] as $conditionField => $conditionValue) {
 				// if a logical or statement has been pased somewhere
-				if($conditionField == 'or') {
+				if(strtoupper($conditionField) == 'OR' && $conditionValue === true) {
 					$isOr = true;
-					if(is_array($conditionValue)) {
-						$conditions = array_merge($conditions, $conditionValue);
-					}
 				} else {
 					$conditions[$conditionField] = $conditionValue;
 				}
 			}
 
-			// look for condition operators set in conditions array
-			// remove them then include them fx style in the query
-			$operators = array();
-			foreach($conditions as $conditionField => $conditionValue) {
-				$operator = $this->parseConditionField($model, $conditionField, 'operator');
-				$field = $this->parseConditionField($model, $conditionField, 'field');
-				if ($operator) {
-					$operators[$field] = $conditionValue;
-					unset($conditions[$conditionField]);
+			if($isOr){
+				// for compatibility
+				$operators = array();
+				foreach($conditions as $conditionField => $conditionValue) {
+					$operator = $this->parseConditionField($model, $conditionField, 'operator');
+					$field = $this->parseConditionField($model, $conditionField, 'field');
+					if ($operator) {
+						$operators[$field] = $conditionValue;
+						unset($conditions[$conditionField]);
+					}
 				}
-			}
-
-			foreach($conditions as $conditionField => $conditionValue) {
-				$field = $this->parseConditionField($model, $conditionField, 'field');
-
-				if(in_array($field, array_merge($this->allowed_parameters, array('-recid')))){
-					$this->connection->AddDBParam($field, $conditionValue, '');
+				
+				foreach($conditions as $conditionField => $conditionValue) {
+					$field = $this->parseConditionField($model, $conditionField, 'field');
+					
+					if(in_array($field, array_merge($this->allowed_parameters, array('-recid')))){
+						$this->connection->AddDBParam($field, $conditionValue, '');
+					} else {
+						$this->connection->AddDBParam($field, $conditionValue, isset($operators[$field]) ? $operators[$field] : 'eq');
+					}
+					
+					//add or operator
+					if($isOr){
+						$this->connection->SetLogicalOR();
+					}
+				}
+			} else {
+				if (array_key_exists('-findquery', $this->connection->actionArray)) {
+					// require FX.php supporting compound find
+					$query = "";
+					$out = $this->conditionKeysToString($queryData['conditions']);
+					foreach ($out as $key => $value) {
+						$query = empty($query) ? '(' . $value . ')' : $query . ' AND (' . $value . ')';
+					}
+					if (strpos($query, ') AND (') !== false && strpos($query, ') OR (') !== false) {
+						$isFindQuery = true;
+					}
+				}
+				
+				// look for condition operators set in conditions array
+				// remove them then include them fx style in the query
+				if ($isFindQuery === false) {
+					$fmconditions = array();
+					foreach ($out as $key => $value) {
+						if (strpos($value, ') AND (') !== false) {
+							$condition = explode(') AND (', mb_substr($value, 1, mb_strlen($value) - 2));
+							$first = true;
+							foreach ($condition as $key => $val) {
+								next($condition);
+								if ($first === true) {
+									// first
+									$fmconditions[] = mb_substr($val, 1, mb_strlen($val));
+									$first = false;
+								} elseif (current($condition) !== false) {
+									$fmconditions[] = $val;
+								} else {
+									// last
+									$fmconditions[] =  mb_substr($val, 0, mb_strlen($val) - 1);
+								}
+							}
+						} elseif (strpos($value, ') OR (') !== false) {
+							$isOr = true;
+							$condition = explode(') OR (', mb_substr($value, 1, mb_strlen($value) - 2));
+							$first = true;
+							$i = 1;
+							foreach ($condition as $key => $val) {
+								next($condition);
+								if ($first === true) {
+									// first
+									$fmconditions[] = mb_substr($val, 1, mb_strlen($val));
+									$first = false;
+								} elseif (count($condition) != $i) {
+									$fmconditions[] = $val;
+								} else {
+									// last
+									$fmconditions[] = mb_substr($val, 0, mb_strlen($val) - 1);
+								}
+								$i++;
+							}
+						} else {
+							$fmconditions[] = $value;
+						}
+					}
+					
+					$operators = array();
+					foreach ($fmconditions as $conditionField => $conditionValue) {
+						$conditionArray = explode('=', $conditionValue);
+						$field = $this->parseConditionField($model, $conditionArray[0], 'field');
+						$operator = $this->parseConditionField($model,  $conditionArray[0], 'operator');
+						if ($operator) {
+							$operators[$field] = $conditionArray[1];
+						}
+					}
+					foreach ($fmconditions as $conditionField => $conditionValue) {
+						$conditionArray = explode('=', $conditionValue);
+						$field = $this->parseConditionField($model, $conditionArray[0], 'field');
+						$operator = $this->parseConditionField($model,  $conditionArray[0], 'operator');
+						if (empty($operator)) {
+							if(in_array($field, array_merge($this->allowed_parameters, array('-recid')))){
+								$this->connection->AddDBParam($field, $conditionArray[1], '');
+							} else {
+								$this->connection->AddDBParam($field, $conditionArray[1], isset($operators[$field]) ? $operators[$field] : 'eq');
+							}
+						}
+					}
+					
+					if($isOr){
+						$this->connection->SetLogicalOR();
+					}
 				} else {
-					$this->connection->AddDBParam($field, $conditionValue, isset($operators[$field]) ? $operators[$field] : 'eq');
-				}
-
-				//add or operator
-				if($isOr){
-					$this->connection->SetLogicalOR();
+					// using -findquery
+					/*
+					 * TODO : needs to support a logical not statement
+					 */
+					$fmconditions = array();
+					foreach ($out as $key => $value) {
+						if (strpos($value, ') AND (') === false && strpos($value, ') OR (') === false) {
+							$fmconditions[] = $value;
+						} elseif (strpos($value, ') AND (') !== false) {
+							$condition = explode(') AND (', mb_substr($value, 1, mb_strlen($value) - 2));
+							$first = true;
+							foreach ($condition as $key => $val) {
+								next($condition);
+								if ($first === true) {
+									// first
+									$fmconditions[] = mb_substr($val, 1, mb_strlen($val));
+									$first = false;
+								} elseif (current($condition) !== false) {
+									$fmconditions[] = $val;
+								} else {
+									// last
+									$fmconditions[] =  mb_substr($val, 0, mb_strlen($val) - 1);
+								}
+							}
+						} elseif (strpos($value, ') OR (') !== false) {
+							$fmorconditions = array();
+							$condition = explode(') OR (', mb_substr($value, 1, mb_strlen($value) - 2));
+							$first = true;
+							$i = 1;
+							foreach ($condition as $key => $val) {
+								next($condition);
+								if ($first === true) {
+									// first
+									$fmorconditions[] = mb_substr($val, 1, mb_strlen($val));
+									$first = false;
+								} elseif (count($condition) != $i) {
+									$fmorconditions[] = $val;
+								} else {
+									// last
+									$fmorconditions[] = mb_substr($val, 0, mb_strlen($val) - 1);
+								}
+								$i++;
+							}
+							$fmconditions = array_merge($fmconditions, array($fmorconditions));
+						}
+					}
+					
+					$fmquery = $this->__combine($fmconditions);
+					foreach ($fmquery as $key => $query) {
+						$searchFields = array();
+						foreach (explode(',', $query) as $q) {
+							if (!empty($q)) {
+								$conditionArray = explode('=', $q);
+								$field = $this->parseConditionField($model, $conditionArray[0], 'field');
+								$searchFields[] = array($field, $conditionArray[1]);
+							}
+						}
+						$this->connection->FindQuery_Append($searchFields);
+					}
 				}
 			}
 		}
@@ -234,7 +376,11 @@ class Filemaker extends DboSource {
 			if(empty($queryData['conditions'])) {
 				$fmResults = $this->connection->FMFindAll(true, 'basic');
 			} else {
-				$fmResults = $this->connection->FMFind(true, 'basic');
+				if ($isFindQuery === false) {
+					$fmResults = $this->connection->FMFind(true, 'basic');
+				} else {
+					$fmResults = $this->connection->FMFindQuery(true, 'basic');
+				}
 			}
 
 			// test result
@@ -252,7 +398,11 @@ class Filemaker extends DboSource {
 			if(empty($queryData['conditions'])) {
 				$fmResults = $this->connection->FMFindAll();
 			} else {
-				$fmResults = $this->connection->FMFind();
+				if ($isFindQuery === false) {
+					$fmResults = $this->connection->FMFind();
+				} else {
+					$fmResults = $this->connection->FMFindQuery();
+				}
 			}
 
 			if(!$this->handleFXResult($fmResults, $model->name, 'read')) {
@@ -681,6 +831,22 @@ class Filemaker extends DboSource {
 	}
 
 /**
+ * __combine
+ */
+	protected function __combine($r, $c = '') {
+		if($s = (array)array_shift($r)) {
+			foreach($s as $p) {
+				foreach($this->__combine($r, $c) as $t) {
+					$o[] = $p . ',' . $t;
+				}
+			}
+		} else {
+			return (array)$c;
+		}	
+		return $o;
+	}
+
+/**
  * GenerateAssociationQuery
  */
 	public function generateAssociationQuery(& $model, & $linkModel, $type, $association = null, $assocData = array (), & $queryData, $external = false, & $resultSet) {         
@@ -972,6 +1138,59 @@ class Filemaker extends DboSource {
 			$this->timeFlag = microtime(true);
 			return true;
 		}
+	}
+
+/**
+ * Creates a WHERE clause by parsing given conditions array.  Used by Filemaker::read().
+ *
+ * @param array $conditions Array or string of conditions
+ * @return string SQL fragment
+ */
+	public function conditionKeysToString($conditions) {
+		$out = array();
+		
+		/*
+		 * TODO : needs to support a logical not statement
+		 */
+		$bool = array('and', 'or');
+
+		foreach ($conditions as $key => $value) {
+			$join = ' AND ';
+			$not = null;
+			
+			if (is_array($value) && !empty($value)) {
+			} else {
+				$out[] = $key . '=' . $value;
+			}
+			
+			if ((is_numeric($key) && is_array($value)) || in_array(strtolower(trim($key)), $bool)) {
+				if (in_array(strtolower(trim($key)), $bool)) {
+					$join = ' ' . strtoupper($key) . ' ';
+				} else {
+					$key = $join;
+				}
+				$value = $this->conditionKeysToString($value);
+
+				if (strpos($join, 'NOT') !== false) {
+					if (strtoupper(trim($key)) === 'NOT') {
+						$key = 'AND ' . trim($key);
+					}
+					$not = 'NOT ';
+				}
+
+				if (empty($value[1])) {
+					if ($not) {
+						$out[] = $not . '(' . $value[0] . ')';
+					} else {
+						$out[] = $value[0];
+					}
+				} else {
+					$out[] = '(' . $not . '(' . implode(') ' . strtoupper($key) . ' (', $value) . '))';
+				}
+			}
+		}
+
+		return $out;
 	}
 
 /**

@@ -708,14 +708,164 @@ class FilemakerTest extends CakeTestCase {
 			'conditions' => array(
 				'TestArticle.Body' => $_data['TestArticle'][0]['Body'],
 				'or' => true,
-				'TestArticle.Title' => $_data['TestArticle'][1]['Title']
-				)
+				'TestArticle.Title' => $_data['TestArticle'][1]['Title'],
+				'TestArticle.Title.op' => 'eq',
+			)
 		));
 
 		$this->assertInternalType('array', $findResult);
 		$this->assertEqual(count($findResult), 2);
 		$this->assertEqual($findResult[0]['TestArticle']['Body'], $_data['TestArticle'][0]['Body']);
 		$this->assertEqual($findResult[1]['TestArticle']['Title'], $_data['TestArticle'][1]['Title']); 
+	}
+
+/**
+ * testOrFindWithOrConditionArray method
+ *
+ * @return void
+ */
+	public function testOrFindWithOrConditionArray() {
+		$model =& new TestArticle();
+
+		$_data = array(
+			'TestArticle' => array(
+				array(
+					'Title' => 'UT testorfindwithorconditionarray A',
+					'Body' => 'UT testorfindwithorconditionarray Body',
+				), 
+				array(
+					'Title' => 'UT testorfindwithorconditionarray B'
+				),
+				array(
+					'Title' => 'UT testorfindwithorconditionarray C'
+				)
+			)
+		);
+		$model->create();
+		$saveResult = $model->saveAll($_data['TestArticle'], array(
+			'atomic' => FALSE
+		));
+
+		$this->assertInternalType('array', $saveResult);
+
+		$findResult = $model->find('all', array(
+			'conditions' => array(
+				'OR' => array(
+					'TestArticle.Title' => 'A',
+					'TestArticle.Title.op' => 'cn',
+					'TestArticle.Title' => 'B',
+					'TestArticle.Title.op' => 'cn',
+					'TestArticle.Title' => 'C',
+					'TestArticle.Title.op' => 'cn',
+				),
+			)
+		));
+
+		$this->assertInternalType('array', $findResult);
+		$this->assertEqual(count($findResult), 3);
+		$this->assertEqual($findResult[0]['TestArticle']['Body'], $_data['TestArticle'][0]['Body']);
+		$this->assertEqual($findResult[1]['TestArticle']['Title'], $_data['TestArticle'][1]['Title']); 
+		$this->assertEqual($findResult[2]['TestArticle']['Title'], $_data['TestArticle'][2]['Title']); 
+	}
+
+/**
+ * testFindWithAndConditionArray method
+ *
+ * @return void
+ */
+	public function testFindWithAndConditionArray() {
+		$model =& new TestArticle();
+
+		$_data = array(
+			'TestArticle' => array(
+				array(
+					'Title' => 'UT testorfindwithandconditionarray A',
+					'Body' => 'UT testorfindwithandconditionarray Body A',
+				), 
+				array(
+					'Title' => 'UT testorfindwithandconditionarray B',
+					'Body' => 'UT testorfindwithandconditionarray Body B',
+				),
+				array(
+					'Title' => 'UT testorfindwithandconditionarray C'
+				)
+			)
+		);
+		$model->create();
+		$saveResult = $model->saveAll($_data['TestArticle'], array(
+			'atomic' => FALSE
+		));
+
+		$this->assertInternalType('array', $saveResult);
+
+		$findResult = $model->find('all', array(
+			'conditions' => array(
+				'AND' => array(
+					'TestArticle.Title' => ' A',
+					'TestArticle.Title.op' => 'cn',
+					'TestArticle.Body' => 'Body',
+					'TestArticle.Body.op' => 'cn',
+				),
+			)
+		));
+
+		$this->assertInternalType('array', $findResult);
+		$this->assertEqual(count($findResult), 1);
+		$this->assertEqual($findResult[0]['TestArticle']['Body'], $_data['TestArticle'][0]['Body']);
+	}
+
+/**
+ * testCompoundFind method
+ *
+ * @return void
+ */
+	public function testCompoundFind() {
+		$model =& new TestArticle();
+
+		$_data = array(
+			'TestArticle' => array(
+				array(
+					'Title' => 'UT testcompoundfind A',
+					'Body' => 'UT testcompoundfind Body A',
+				), 
+				array(
+					'Title' => 'UT testcompoundfind B',
+					'Body' => 'UT testcompoundfind Body B',
+				),
+				array(
+					'Title' => 'UT testcompoundfind C',
+					'Body' => 'UT testcompoundfind Body C',
+				),
+				array(
+					'Title' => 'UT testcompoundfind D',
+				)
+			)
+		);
+		$model->create();
+		$saveResult = $model->saveAll($_data['TestArticle'], array(
+			'atomic' => FALSE
+		));
+
+		$this->assertInternalType('array', $saveResult);
+
+		$findResult = $model->find('all', array(
+			'conditions' => array(
+				'TestArticle.Body' => '*testcompoundfind*',
+				'AND' => array(
+					array('TestArticle.Title' => '*UT*'),
+					array('TestArticle.Body' => '*Body*'),
+				),
+				'OR' => array(
+					array('TestArticle.Title' => '* B*'),
+					array('TestArticle.Title' => '* C*'),
+				),
+			)
+		));
+
+		$this->assertInternalType('array', $findResult);
+		$this->assertEqual(count($findResult), 2);
+		$this->assertEqual($findResult[0]['TestArticle']['Body'], $_data['TestArticle'][1]['Body']);
+		$this->assertEqual($findResult[1]['TestArticle']['Title'], $_data['TestArticle'][2]['Title']); 
 	}
 
 /**
