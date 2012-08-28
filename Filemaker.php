@@ -179,8 +179,8 @@ class Filemaker extends DboSource {
 				}
 			}
 
-			if($isOr){
-				// for compatibility
+			if($isOr || array_key_exists('-findquery', $this->connection->actionArray) === false) {
+				// for compatibility with FX 4.5.1
 				$operators = array();
 				foreach($conditions as $conditionField => $conditionValue) {
 					$operator = $this->parseConditionField($model, $conditionField, 'operator');
@@ -206,16 +206,14 @@ class Filemaker extends DboSource {
 					}
 				}
 			} else {
-				if (array_key_exists('-findquery', $this->connection->actionArray)) {
-					// require FX.php supporting compound find
-					$query = "";
-					$out = $this->conditionKeysToString($queryData['conditions']);
-					foreach ($out as $key => $value) {
-						$query = empty($query) ? '(' . $value . ')' : $query . ' AND (' . $value . ')';
-					}
-					if (strpos($query, ') AND (') !== false && strpos($query, ') OR (') !== false) {
-						$isFindQuery = true;
-					}
+				// require FX.php supporting compound find
+				$query = "";
+				$out = $this->conditionKeysToString($queryData['conditions']);
+				foreach ($out as $key => $value) {
+					$query = empty($query) ? '(' . $value . ')' : $query . ' AND (' . $value . ')';
+				}
+				if (strpos($query, ') AND (') !== false && strpos($query, ') OR (') !== false) {
+					$isFindQuery = true;
 				}
 				
 				// look for condition operators set in conditions array
