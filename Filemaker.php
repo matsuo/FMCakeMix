@@ -263,7 +263,7 @@ class Filemaker extends DboSource {
 					
 					$operators = array();
 					foreach ($fmconditions as $conditionField => $conditionValue) {
-						$conditionArray = explode('=', $conditionValue);
+						$conditionArray = explode('=', $conditionValue, 2);
 						$field = $this->parseConditionField($model, $conditionArray[0], 'field');
 						$operator = $this->parseConditionField($model,  $conditionArray[0], 'operator');
 						if ($operator) {
@@ -271,7 +271,7 @@ class Filemaker extends DboSource {
 						}
 					}
 					foreach ($fmconditions as $conditionField => $conditionValue) {
-						$conditionArray = explode('=', $conditionValue);
+						$conditionArray = explode('=', $conditionValue, 2);
 						$field = $this->parseConditionField($model, $conditionArray[0], 'field');
 						$operator = $this->parseConditionField($model,  $conditionArray[0], 'operator');
 						if (empty($operator)) {
@@ -339,7 +339,7 @@ class Filemaker extends DboSource {
 						$searchFields = array();
 						foreach (explode(',', $query) as $q) {
 							if (!empty($q)) {
-								$conditionArray = explode('=', $q);
+								$conditionArray = explode('=', $q, 2);
 								$field = $this->parseConditionField($model, $conditionArray[0], 'field');
 								$searchFields[] = array($field, $conditionArray[1]);
 							}
