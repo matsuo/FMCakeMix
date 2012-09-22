@@ -120,7 +120,33 @@ class ModelTest extends CakeTestCase {
     $this->assertEqual($result[0]['TestArticle']['Body'], 'UT CFR Body');
   }
   
-  
+/**
+ * testCreateFindRecordWithNoFindCriteria method
+ *
+ * @access public
+ * @return void
+ */
+  function testCreateFindRecordWithNoFindCriteria() {
+    $model =& new TestArticle();
+    $_data = array(
+      'TestArticle' => array(
+        'Title' => 'UT CFRWNFC Title',
+        'Body' => 'UT CFRWNFC Body'
+      )
+    );
+    $model->create();
+    $saveResult = $model->save($_data);
+
+    $primaryKeyID = $model->id;
+
+    $result = $model->find('all', array(
+      'conditions' => array(),
+      'recursive' => 0,
+    ));
+
+    $this->assertEqual($result[0]['TestArticle']['id'], $primaryKeyID);
+    $this->assertEqual($result[0]['TestArticle']['Title'], 'UT CFRWNFC Title');
+  }
    
 /**
  * testCreateFindDeleteRecordAll method
@@ -542,13 +568,13 @@ class ModelTest extends CakeTestCase {
 
 
 /**
- * endCase method
+ * endTest method
  *
  * wrap up script
  * @access public
  * @return void
  */
-  function endCase() {
+  function endTest() {
     
     
     // delete articles

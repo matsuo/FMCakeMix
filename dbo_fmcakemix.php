@@ -241,7 +241,11 @@ class DboFMCakeMix extends DataSource {
       foreach($conditions as $conditionField => $conditionValue) {
         $field = $this->parseConditionField($model, $conditionField, 'field');
         
-        $this->connection->AddDBParam($field, $conditionValue, isset($operators[$field]) ? $operators[$field] : 'eq');
+        if(in_array($field, array_merge($this->allowed_parameters, array('-recid')))){
+          $this->connection->AddDBParam($field, $conditionValue, '');
+        } else {
+          $this->connection->AddDBParam($field, $conditionValue, isset($operators[$field]) ? $operators[$field] : 'eq');
+        }
       
         //add or operator
         if($isOr){
@@ -271,7 +275,11 @@ class DboFMCakeMix extends DataSource {
     // return a found count if requested
     if($queryData['fields'] == 'COUNT') {
       // perform find without returning result data
-      $fmResults = $this->connection->FMFind(true, 'basic');
+      if(empty($queryData['conditions'])) {
+        $fmResults = $this->connection->FMFindAll(true, 'basic');
+      } else {
+        $fmResults = $this->connection->FMFind(true, 'basic');
+      }
     
       // test result
       if(!$this->handleFXResult($fmResults, $model->name, 'read (count)')) {
@@ -285,7 +293,11 @@ class DboFMCakeMix extends DataSource {
       return $countResult;
     } else {
       // perform the find in FileMaker
-      $fmResults = $this->connection->FMFind();
+      if(empty($queryData['conditions'])) {
+        $fmResults = $this->connection->FMFindAll();
+      } else {
+        $fmResults = $this->connection->FMFind();
+      }
     
       if(!$this->handleFXResult($fmResults, $model->name, 'read')) {
         return FALSE;
@@ -406,12 +418,22 @@ class DboFMCakeMix extends DataSource {
     // set basic connection data
     $this->connection->SetDBData($fm_database, $fm_layout);
     
-    if(is_null($conditions)) {
-      $this->connection->AddDBParam('-recid', $model->getId(), 'eq');
+    if(!isset($conditions['-recid'])) {
+      $model->find('first', array(
+        'conditions' => array(
+            '-recid' => $model->field('-recid'),
+        ),
+        'recursive' => 0
+      ));
+      $this->connection->AddDBParam('-recid', $model->field('-recid'), '');
     } else {
       // must contain a -recid field
       foreach($conditions as $field => $value) {
-        $this->connection->AddDBParam($field, $value, 'eq');
+        if(in_array($field, array('-recid'))){
+          $this->connection->AddDBParam($field, $value, '');
+        } else {
+          $this->connection->AddDBParam($field, $value, 'eq');
+        }
       }
     }
     
