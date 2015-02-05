@@ -1132,7 +1132,7 @@ class FilemakerTest extends CakeTestCase {
  * wrap up script
  * @return void
  */
-	public function endTest() {
+	public function endTest($method) {
 		// delete articles
 		$model =& new TestArticle();
 		$result = $model->find('all', array(

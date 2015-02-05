@@ -695,9 +695,7 @@ class Filemaker extends DboSource {
 	}
 
 /**
- * Generates a query or part of a query from a single model or two associated models.
- *
- * Builds a string containing an SQL statement template.
+ * _generateAssociationQueryData
  *
  * @param Model $Model Primary Model object.
  * @param Model|null $LinkModel Linked model object.
@@ -710,7 +708,7 @@ class Filemaker extends DboSource {
  *   String representing a query.
  *   True, when $external is false and association $type is 'hasOne' or 'belongsTo'.
  */
-	public function generateAssociationQuery(Model $model, $linkModel, $type, $association = null, $assocData = array(), &$queryData, $external = false, &$resultSet) {
+	private function _generateAssociationQuery(Model $model, $linkModel, $type, $association = null, $assocData = array(), &$queryData, $external = false, &$resultSet) {
 		switch ($type) {;
 			case 'hasOne' : 
 				$id = $resultSet[$model->name][$model->primaryKey]; 
@@ -743,7 +741,7 @@ class Filemaker extends DboSource {
 		return null; 
 	}
 
-	/**
+/**
  * Queries associations.
  *
  * Used to fetch results on recursive models.
@@ -769,7 +767,7 @@ class Filemaker extends DboSource {
  */
 	public function queryAssociation(Model $model, Model $linkModel, $type, $association, $assocData, &$queryData, $external = false, &$resultSet, $recursive, $stack) {
 		foreach($resultSet as $projIndex => $row) {
-			$queryData = $this->generateAssociationQuery($model, $linkModel, $type, $association, $assocData, $queryData, $external, $row);
+			$queryData = $this->_generateAssociationQuery($model, $linkModel, $type, $association, $assocData, $queryData, $external, $row);
 
 			$associatedData = $this->readAssociated($linkModel, $queryData, 0);
 
