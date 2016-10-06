@@ -211,13 +211,23 @@ class Filemaker extends DboSource {
 		}
 
 		// set sort order
-		foreach($queryData['order'] as $orderCondition) {
-			if(!empty($orderCondition) && is_array($orderCondition)){
-				foreach($orderCondition as $conditionField => $sortRule) {
-					$field = $this->parseConditionField($model, $conditionField, 'field');
-
+		if ((float)Configure:: version() >= 2.8) {
+			foreach($queryData['order'] as $conditionField => $sortRule) {
+				$field = $this->parseConditionField($model, $conditionField, 'field');
+				if (!empty($field) && $sortRule !== FALSE) {
 					$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
 					$this->connection->AddSortParam($field, $sortRuleFm);
+				}
+			}
+		} else {
+			foreach($queryData['order'] as $orderCondition) {
+				if(!empty($orderCondition) && is_array($orderCondition)){
+					foreach($orderCondition as $conditionField => $sortRule) {
+						$field = $this->parseConditionField($model, $conditionField, 'field');
+
+						$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
+						$this->connection->AddSortParam($field, $sortRuleFm);
+					}
 				}
 			}
 		}
@@ -811,16 +821,29 @@ class Filemaker extends DboSource {
 		}
 
 		// set sort order
-		foreach($queryData['order'] as $orderCondition) {
-			if(!empty($orderCondition) && is_array($orderCondition)){
-				foreach($orderCondition as $field => $sortRule) {
-					$string = $field;
-					$pattern = '/(\w+)\.(-*\w+)$/i';
-					$replacement = '${2}';
-					$plainField = preg_replace($pattern, $replacement, $string);
-
+		if ((float)Configure:: version() >= 2.8) {
+			foreach($queryData['order'] as $field => $sortRule) {
+				$string = $field;
+				$pattern = '/(\w+)\.(-*\w+)$/i';
+				$replacement = '${2}';
+				$plainField = preg_replace($pattern, $replacement, $string);
+				if (!empty($plainField) && $sortRule !== FALSE) {
 					$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
 					$this->connection->AddSortParam($plainField, $sortRuleFm);
+				}
+			}
+		} else {
+			foreach($queryData['order'] as $orderCondition) {
+				if(!empty($orderCondition) && is_array($orderCondition)){
+					foreach($orderCondition as $field => $sortRule) {
+						$string = $field;
+						$pattern = '/(\w+)\.(-*\w+)$/i';
+						$replacement = '${2}';
+						$plainField = preg_replace($pattern, $replacement, $string);
+
+						$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
+						$this->connection->AddSortParam($plainField, $sortRuleFm);
+					}
 				}
 			}
 		}
