@@ -28,9 +28,8 @@ http://cakephp.org/.
 FX.php is PHP class created by Chris Hansen to speak with FileMaker via XML.
 The FMCakeMix driver uses FX.php to send queries to FileMaker and is necessary 
 for the driver’s functionality. Install FX.php by downloading the files from 
-http://www.iviking.org/FX.php/ and placing the FX.php, FX_Error.php, 
-ObjectiveFX.php, FX_constants.php, and image_proxy.php files and 
-datasource_classes folder at the root of the yourcakeinstall/app/Vendor folder.
+http://fx.iviking.org/ and placing the FX.php and lib folder at the root of 
+the yourcakeinstall/app/Vendor folder.
 
 Because the driver uses XML to communicate with FileMaker, your FileMaker
 solutions must be hosted on a version of FileMaker Server that supports web

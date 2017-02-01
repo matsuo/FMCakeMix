@@ -1,6 +1,6 @@
 <?php 
 /**
- * FMCakeMix for CakePHP 2.0
+ * FMCakeMix for CakePHP 2
  * @author Alex Gibbons alex_g@beezwax.net
  * @date 02/2009
  * 
@@ -33,7 +33,7 @@
 // FX is a free open-source PHP class for accessing FileMaker using curl and xml
 // By: Chris Hansen with Chris Adams, Gjermund Thorsen, Masayuki Nii, and others
 // Tested with version: 4.5.1, 6.0
-// Web Site: www.iviking.org
+// Web Site: http://fx.iviking.org/
 // =================================================================================
 
 App::uses('DboSource', 'Model/Datasource');
