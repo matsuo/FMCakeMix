@@ -245,11 +245,7 @@ class Filemaker extends DboSource {
 		// return a found count if requested
 		if($queryData['fields'] == 'COUNT') {
 			// perform find without returning result data
-			if(empty($queryData['conditions'])) {
-				$fmResults = $this->connection->FMFindAll(true, 'basic');
-			} else {
-				$fmResults = $this->connection->FMFind(true, 'basic');
-			}
+			$fmResults = $this->_findRecords($queryData['conditions'], 'count');
 
 			// test result
 			if(!$this->handleFXResult($fmResults, $model->name, 'read (count)')) {
@@ -263,11 +259,7 @@ class Filemaker extends DboSource {
 			return $countResult;
 		} else {
 			// perform the find in FileMaker
-			if(empty($queryData['conditions'])) {
-				$fmResults = $this->connection->FMFindAll();
-			} else {
-				$fmResults = $this->connection->FMFind();
-			}
+			$fmResults = $this->_findRecords($queryData['conditions']);
 
 			if(!$this->handleFXResult($fmResults, $model->name, 'read')) {
 				return false;
@@ -331,6 +323,35 @@ class Filemaker extends DboSource {
 
 		// return data
 		return $resultsOut;
+	}
+
+/**
+ * perform the find in FileMaker
+ *
+ * @param array $conditions
+ * @param string $type
+ */
+	protected function _findRecords($conditions, $type = null) {
+		foreach($this->allowed_parameters as $allowed_parameter) {
+			if (isset($conditions[$allowed_parameter])) {
+				unset($conditions[$allowed_parameter]);
+			}
+		}
+		if(empty($conditions)) {
+			if ($type == 'count') {
+				$fmResults = $this->connection->FMFindAll(true, 'basic');
+			} else {
+				$fmResults = $this->connection->FMFindAll();
+			}
+		} else {
+			if ($type == 'count') {
+				$fmResults = $this->connection->FMFind(true, 'basic');
+			} else {
+				$fmResults = $this->connection->FMFind();
+			}
+		}
+
+		return $fmResults;
 	}
 
 /**
