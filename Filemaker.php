@@ -38,6 +38,7 @@
 
 App::uses('DboSource', 'Model/Datasource');
 App::uses('FX', 'Vendor');
+App::uses('CakeLog', 'Log');
 
 class Filemaker extends DboSource { 
 
