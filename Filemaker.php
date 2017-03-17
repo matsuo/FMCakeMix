@@ -32,7 +32,7 @@
 // =================================================================================
 // FX is a free open-source PHP class for accessing FileMaker using curl and xml
 // By: Chris Hansen with Chris Adams, Gjermund Thorsen, Masayuki Nii, and others
-// Tested with version: 4.5.1, 6.0
+// Tested with version: 4.5.1, 6.0, 6.10
 // Web Site: http://fx.iviking.org/
 // =================================================================================
 
@@ -42,25 +42,28 @@ App::uses('CakeLog', 'Log');
 
 class Filemaker extends DboSource { 
 
-	var $description = "FileMaker DBO Driver"; 
+	public $description = "FileMaker DBO Driver";
 
-	var $_baseConfig = array ( 
+	public $_baseConfig = array (
 		'host' => '127.0.0.1',
 		'port' => 80,
 		'scheme' => 'http',
 		'encoding' => 'utf8',
-		'dataSourceType' => 'FMPro7',
+		'dataSourceType' => 'FMPro12',
 	); 
 
 	// warning: these get added to schema, but allow you to pass in values
 	// so that the xml api parses them as functional parameters
-	var $allowed_parameters = array(
+	public $allowed_parameters = array(
 		'-script',
 		'-script.prefind',
 		'-script.presort',
 		'-script.param',
 		'-script.prefind.param',
-		'-script.presort.param'
+		'-script.presort.param',
+		'-script.param.op',
+		'-script.prefind.param.op',
+		'-script.presort.param.op'
 	);
 
 /**
@@ -68,7 +71,7 @@ class Filemaker extends DboSource {
  *
  * @var array
  */
-	var $columns = array(
+	public $columns = array(
 		'primary_key' => array('name' => 'NUMBER'),
 		'string' => array('name' => 'TEXT'),
 		'text' => array('name' => 'TEXT'),
@@ -719,7 +722,7 @@ class Filemaker extends DboSource {
  *   String representing a query.
  *   True, when $external is false and association $type is 'hasOne' or 'belongsTo'.
  */
-	private function _generateAssociationQuery(Model $model, $linkModel, $type, $association = null, $assocData = array(), &$queryData, $external = false, &$resultSet) {
+	protected function _generateAssociationQuery(Model $model, $linkModel, $type, $association = null, $assocData = array(), &$queryData, $external = false, &$resultSet) {
 		switch ($type) {;
 			case 'hasOne' : 
 				$id = $resultSet[$model->name][$model->primaryKey]; 
