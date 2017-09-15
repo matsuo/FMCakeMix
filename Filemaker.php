@@ -215,7 +215,7 @@ class Filemaker extends DboSource {
 		}
 
 		// set sort order
-		if ((float)Configure:: version() >= 2.8) {
+		if (version_compare(Configure::version(), '2.8', '>=')) {
 			foreach($queryData['order'] as $conditionField => $sortRule) {
 				$field = $this->parseConditionField($model, $conditionField, 'field');
 				if (!empty($field) && $sortRule !== FALSE) {
