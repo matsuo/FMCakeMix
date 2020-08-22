@@ -293,16 +293,16 @@ class Filemaker extends DboSource {
 			if (is_array($model->_associations)) {
 				foreach ($model->_associations as $type) {
 					foreach ($model->{$type} as $assoc => $assocData) {
-						$linkModel =& $model->{$assoc};
+						$linkModel = $model->{$assoc};
 						
 						if (!in_array($type . '/' . $assoc, $linkedModels)) {
 							if ($model->useDbConfig == $linkModel->useDbConfig) {
-								$db =& $this;
+								$db = $this;
 							} else {
-								$db =& ConnectionManager::getDataSource($linkModel->useDbConfig);
+								$db = ConnectionManager::getDataSource($linkModel->useDbConfig);
 							}
 						} elseif ($model->recursive > 1 && ($type == 'belongsTo' || $type == 'hasOne')) {
-							$db =& $this;
+							$db = $this;
 						}
 	
 						if (isset($db)) {
@@ -696,7 +696,7 @@ class Filemaker extends DboSource {
 		$cache = $this->__cacheDescription($model->tablePrefix . $model->table);
 
 		if ($cache !== null) {
-			$this->__descriptions[$model->tablePrefix . $model->table] =& $cache;
+			$this->__descriptions[$model->tablePrefix . $model->table] = $cache;
 			return $cache;
 		}
 		return null;
@@ -715,7 +715,7 @@ class Filemaker extends DboSource {
 		}
 
 		if ($data !== null) {
-			$this->__descriptions[$object] =& $data;
+			$this->__descriptions[$object] = $data;
 		}
 
 		$key = ConnectionManager::getSourceName($this) . '_' . $object;
@@ -840,7 +840,7 @@ class Filemaker extends DboSource {
 				$string = $conditionField;
 				$pattern = '/(\w+)\.(-*\w+)$/i';
 				$replacement = '${2}';
-				$plainField = preg_replace($pattern, $replacement, $string);
+				$plainField = @preg_replace($pattern, $replacement, $string);
 				$this->connection->AddDBParam($plainField, $conditionValue, 'eq');
 			}
 		}
@@ -851,7 +851,7 @@ class Filemaker extends DboSource {
 				$string = $field;
 				$pattern = '/(\w+)\.(-*\w+)$/i';
 				$replacement = '${2}';
-				$plainField = preg_replace($pattern, $replacement, $string);
+				$plainField = @preg_replace($pattern, $replacement, $string);
 				if (!empty($plainField) && $sortRule !== FALSE) {
 					$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
 					$this->connection->AddSortParam($plainField, $sortRuleFm);
@@ -864,7 +864,7 @@ class Filemaker extends DboSource {
 						$string = $field;
 						$pattern = '/(\w+)\.(-*\w+)$/i';
 						$replacement = '${2}';
-						$plainField = preg_replace($pattern, $replacement, $string);
+						$plainField = @preg_replace($pattern, $replacement, $string);
 
 						$sortRuleFm = $sortRule == 'desc' ? 'descend' : 'ascend';
 						$this->connection->AddSortParam($plainField, $sortRuleFm);
