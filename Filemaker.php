@@ -988,8 +988,8 @@ class Filemaker extends DboSource {
  * @param PDOStatement $query the query to extract the error from if any
  * @return string Error message with error number 
  */
-	public function lastError(PDOStatement $query = null) { 
-		if (FX::isError($this->lastFXError)) { 
+	public function lastError(PDOStatement $query = null) {
+		if ($this->connection->isError($this->lastFXError)) {
 			return $this->lastFXError.getCode() . ': ' . $this->lastFXError.getMessage(); 
 		}
 		return null; 
@@ -1011,7 +1011,7 @@ class Filemaker extends DboSource {
 		$this->_queriesCnt++;
 
 		// if a connection error
-		if(FX::isError($result)) {
+		if($this->connection->isError($result)) {
 		
 			// log error
 			$this->_queriesLog[] = array(
