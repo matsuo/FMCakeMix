@@ -5,3 +5,16 @@ Basic unit testing for development
 2) install the Case into yourcakeinstall/app/Test
 
 3) define a test database connection that points to the DriverUnitTesting database
+
+Unit testing for the Data API driver (FilemakerDataAPI)
+
+1) host the DriverUnitTesting.fmp12 FileMaker database on FileMaker Server,
+   enable the Data API and the "fmrest" extended privilege for the test account
+
+2) place FMDataAPI as yourcakeinstall/app/Vendor/FMDataAPI/src
+
+3) install the Case into yourcakeinstall/app/Test and define a database
+   connection named "test_dataapi" with 'datasource' => 'Database/FilemakerDataAPI'
+   that points to the DriverUnitTesting database
+
+4) run: Console/cake test app Model/Datasource/Database/FilemakerDataAPI
